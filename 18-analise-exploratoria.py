@@ -8,7 +8,7 @@ plb.rcParams['font.size'] = 20
 
 fs = s3fs.S3FileSystem(anon=False)
 
-# Método que carrega o dataset e o mantém em uma memória cache.
+# Carregando o arquivo csv.
 
 @st.cache(ttl=600)
 def load_data():
