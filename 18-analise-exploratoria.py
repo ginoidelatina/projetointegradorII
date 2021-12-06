@@ -10,9 +10,9 @@ fs = s3fs.S3FileSystem(anon=False)
 
 # Método que carrega o dataset e o mantém em uma memória cache.
 
-@st.cache
+@st.cache(ttl=600)
 def load_data():
-    with fs.open("dataframe.csv") as microdados:
+    with fs.open("s3://pi01.microdadoscensosuperior2019/dataframe.csv") as microdados:
         return pd.read_csv(microdados,sep="|", encoding= "ISO-8859-1")
 
 #st.title('Acesso à Educação Superior')
