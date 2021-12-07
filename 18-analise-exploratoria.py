@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import s3fs
+#from s3fs import S3FileSystem as s3
 import streamlit as st
 import matplotlib.pyplot as plt
 import pylab as plb
@@ -11,9 +12,11 @@ fs = s3fs.S3FileSystem(anon=False)
 # Carregando o arquivo csv.
 
 @st.cache(ttl=600)
-def load_data():
-    with fs.open("s3://pi01.microdadoscensosuperior2019/dataframe.csv") as microdados:
+def load_data(filecsv):
+    with fs.open(filecsv) as microdados:
         return pd.read_csv(microdados,sep="|", encoding= "ISO-8859-1")
+
+dataframe = load_data("s3://pi01.microdadoscensosuperior2019/dataframe.csv")
 
 #st.title('Acesso à Educação Superior')
 st.sidebar.title('Menu')
@@ -52,6 +55,7 @@ if paginaselect == 'Início':
     
     Atualmente estamos na fase de ampliar os mecanismos de busca da aplicação.
     '''
+    
 elif paginaselect == 'Buscar infográficos':
 
     st.title('Acesso à Educação Superior')
@@ -66,7 +70,7 @@ elif paginaselect == 'Buscar infográficos':
 
     
     # Chamar o método que retorna o dataset.
-    dataframe = load_data()
+    #dataframe = load_data()
 
     uf_temp = dataframe['UF'].unique()
     uf = uf_temp.tolist()
