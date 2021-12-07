@@ -16,11 +16,6 @@ def load_data():
     initial_df = pd.read_csv(obj['Body'])
     return initial_df
 
-
-    with fs.open("s3://pi01.microdadoscensosuperior2019/dataframe.csv") as microdados:
-        return pd.read_csv(microdados,sep="|", encoding= "ISO-8859-1")
-
-
 #st.title('Acesso à Educação Superior')
 st.sidebar.title('Menu')
 paginaselect =st.sidebar.empty()
