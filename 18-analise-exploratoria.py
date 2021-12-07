@@ -1,22 +1,25 @@
 import pandas as pd
 import os
-import s3fs
-#from s3fs import S3FileSystem as s3
+import boto3
 import streamlit as st
 import matplotlib.pyplot as plt
 import pylab as plb
 plb.rcParams['font.size'] = 20
 
-fs = s3fs.S3FileSystem(anon=False)
-
 # Carregando o arquivo csv.
-
 @st.cache(ttl=600)
-def load_data(filecsv):
-    with fs.open(filecsv) as microdados:
+def load_data():
+    bucket = "pi01.microdadoscensosuperior2019"
+    file_name = 'dataframe.csv'
+    s3 = boto3.client('s3')
+    obj = s3.get_object(Bucket= bucket, Key = file_name)
+    initial_df = pd.read_csv(obj['Body'])
+    return initial_df
+
+
+    with fs.open("s3://pi01.microdadoscensosuperior2019/dataframe.csv") as microdados:
         return pd.read_csv(microdados,sep="|", encoding= "ISO-8859-1")
 
-dataframe = load_data("s3://pi01.microdadoscensosuperior2019/dataframe.csv")
 
 #st.title('Acesso à Educação Superior')
 st.sidebar.title('Menu')
@@ -69,8 +72,8 @@ elif paginaselect == 'Buscar infográficos':
 
 
     
-    # Chamar o método que retorna o dataset.
-    #dataframe = load_data()
+    # Chamar o método que retorna o dataframe.
+    dataframe = load_data()
 
     uf_temp = dataframe['UF'].unique()
     uf = uf_temp.tolist()
