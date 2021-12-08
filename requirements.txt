@@ -3,3 +3,4 @@ pandas==1.2.4
 matplotlib.pyplot==3.3.4
 boto3==1.18.21 
 s3fs==2021.11.1
+opencv-python-headless
