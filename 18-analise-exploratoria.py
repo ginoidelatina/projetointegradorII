@@ -68,7 +68,6 @@ elif paginaselect == 'Buscar infográficos':
 
 
     
-    # Chamar o método que retorna o dataframe.
     dataframe = load_data()
 
     uf_temp = dataframe['UF'].unique()
