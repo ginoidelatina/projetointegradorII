@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import s3fs
 from s3fs.core import S3FileSystem
 import streamlit as st
 import matplotlib.pyplot as plt
