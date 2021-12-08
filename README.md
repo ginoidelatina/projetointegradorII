@@ -9,7 +9,7 @@ ou
 https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-da-educacao-superior
 
 
-Por enquanto, a última atualização do documento foi realizada no dia 29 de Outubro de 2021, 14:03 (UTC-03:00)).
+Por enquanto, a última atualização do documento foi realizada no dia 29 de Outubro de 2021, 14:03 (UTC-03:00).
 
 Licença:
 Creative Commons Attribution License (cc-by)  http://opendefinition.org/licenses/cc-by/
