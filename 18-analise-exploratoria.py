@@ -1,7 +1,6 @@
 import pandas as pd
 import os
-import s3fs
-from s3fs.core import S3FileSystem
+import boto3
 import streamlit as st
 import matplotlib.pyplot as plt
 import pylab as plb
@@ -10,12 +9,14 @@ plb.rcParams['font.size'] = 20
 # Carregando o arquivo csv.
 @st.cache(ttl=600)
 def load_data():
-    s3 = S3FileSystem(anon=False)
     bucket = "pi01.microdadoscensosuperior2019"
-    key = 'dataframe.csv'
-    df = pd.read_csv(s3.open('{}/{}'.format(bucket, key), mode='rb'))
-    df = pd.read_csv(s3.open(f'{bucket}/{key}', mode='rb'))
-    return df
+    file_name = 'dataframe.csv'
+    s3 = boto3.client('s3')
+    obj = s3.get_object(Bucket= bucket, Key = file_name)
+    initial_df = pd.read_csv(obj['Body'])
+    return initial_df
+    
+dataframe = load_data()
 
 #st.title('Acesso à Educação Superior')
 st.sidebar.title('Menu')
