@@ -25,7 +25,7 @@ paginaselect = st.sidebar.selectbox('Selecione a página', ['Início', 'Buscar i
 ### Seleção das Páginas ###
 if paginaselect == 'Início':
     #st.header('Home')
-    st.title('Acesso à Educação Superior')  #############
+    st.title('Acesso à Educação Superior')
     st.header('Início')
     '''
     Este site tem como objetivo partilhar análises descritas e visuais com a intenção de observar o acesso à Educação Superior no Brasil. 
@@ -439,7 +439,7 @@ elif paginaselect == 'Buscar infográficos':
                 st.write('')  
 
                 # Gráfico:
-                labels_d = ['Não', 'Sim', 'Não coletado']      ####### Será preciso usar labels_r, labels_g e labels_d? Não basta uma variável apenas?
+                labels_d = ['Não', 'Sim', 'Não coletado']      
                 values_d = [[df1['IN_DEFICIENCIA'].where(df1.IN_DEFICIENCIA == 'Não')\
                     .count(), df1['IN_DEFICIENCIA'].where(df1.IN_DEFICIENCIA == 'Sim')\
                         .count(), df1['IN_DEFICIENCIA'].where(df1.IN_DEFICIENCIA == 'Não coletado').count()]]
@@ -631,7 +631,7 @@ elif paginaselect == 'Buscar infográficos':
             st.write('')  
 
             # Gráfico:
-            labels_d = ['Não', 'Sim', 'Não coletado']      ####### Será preciso usar labels_r, labels_g e labels_d? Não basta uma variável apenas?
+            labels_d = ['Não', 'Sim', 'Não coletado']      
             values_d = [[df_adm['IN_DEFICIENCIA'].where(df_adm.IN_DEFICIENCIA == 'Não').count(),\
                 df_adm['IN_DEFICIENCIA'].where(df_adm.IN_DEFICIENCIA == 'Sim').count(),\
                     df_adm['IN_DEFICIENCIA'].where(df_adm.IN_DEFICIENCIA == 'Não coletado').count()]]
@@ -817,7 +817,6 @@ elif paginaselect == 'Buscar infográficos':
             st.write(valage1)
 
             #####################################################################################################
-            ### Descrição dos alunos, por portabilidade de deficiência. ###
 
             st.write('') 
             st.write('') 
@@ -826,7 +825,7 @@ elif paginaselect == 'Buscar infográficos':
             st.write('') 
 
             # Gráfico:
-            labels_d = ['Não', 'Sim', 'Não coletado']      ####### Será preciso usar labels_r, labels_g e labels_d? Não basta uma variável apenas?
+            labels_d = ['Não', 'Sim', 'Não coletado']      
             values_d = [[df_uf['IN_DEFICIENCIA'].where(df_uf.IN_DEFICIENCIA == 'Não').count(),\
                 df_uf['IN_DEFICIENCIA'].where(df_uf.IN_DEFICIENCIA == 'Sim').count(),\
                     df_uf['IN_DEFICIENCIA'].where(df_uf.IN_DEFICIENCIA == 'Não coletado').count()]]
@@ -936,12 +935,12 @@ elif paginaselect == 'Buscar infográficos':
             
             colors = ['blueviolet','orange']
             fig, axg = plt.subplots(figsize=(16,10))
-            axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, colors=colors)  ####### shadow = False
+            axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, colors=colors) 
             fig.suptitle('Taxa percentual de alunos, por gênero', size=25)
 
 
             text = 'O Censo da Educação Superior coletou apenas gêneros binários.'
-            axg.text(0.27, 1.0, text, transform=axg.transAxes, fontsize=16)            ###################### mudar em todo o código 
+            axg.text(0.27, 1.0, text, transform=axg.transAxes, fontsize=16)             
 
             #draw circle
             centre_circle = plt.Circle((0,0),0.70,fc='white')
@@ -964,13 +963,13 @@ elif paginaselect == 'Buscar infográficos':
             st.table(valg)
 
 
-            ############################################################################################################################3
+            ############################################################################################################################
             st.write('') 
             st.write('') 
             st.subheader('Dados relativos à idade')
             st.write('') 
             st.write('') 
-            axi= dataframe.filter(items=['ID_ALUNO', 'NU_IDADE']).groupby('NU_IDADE').count().plot(figsize=(20,10), colormap='PiYG_r')  ##### mudar para todos
+            axi= dataframe.filter(items=['ID_ALUNO', 'NU_IDADE']).groupby('NU_IDADE').count().plot(figsize=(20,10), colormap='PiYG_r')   
             axi.get_legend().remove()
 
             axi.set_ylabel('Quantidade de alunos')
