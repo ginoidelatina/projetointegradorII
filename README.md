@@ -12,8 +12,8 @@ https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo
 Por enquanto, a última atualização do documento foi realizada no dia 29 de Outubro de 2021, 14:03 (UTC-03:00)).
 
 Licença:
-Creative Commons Attribution License (cc-by) -> http://opendefinition.org/licenses/cc-by/
-OPENDATA -> https://opendefinition.org/od/2.1/en/
+Creative Commons Attribution License (cc-by)  http://opendefinition.org/licenses/cc-by/
+OPENDATA https://opendefinition.org/od/2.1/en/
 
 
 Por motivos de segurança, a aplicação não provê o acesso direto à base de dados, embora seja uma fonte de dados pública e aberta. A motivação de tal restrição, 
