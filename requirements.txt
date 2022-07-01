@@ -1,6 +1,5 @@
-streamlit==1.1.0
-pandas==1.2.4
+streamlit==1.10.0 
+pandas==1.4.2
 matplotlib==3.3.4
-boto3==1.18.21
-pip==21.3.1
-opencv-python-headless
+dask==2021.4.0 
+pip==22.1.2 
