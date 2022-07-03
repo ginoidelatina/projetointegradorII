@@ -30,7 +30,7 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
     'Especial':7}
 
     if uf_select == 'Todas opções' and adm_select == 'Todas opções':
-        df = dataframe.drop(['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES']) #.dropna() # precisa desse dropna()??
+        df = dataframe.drop(columns = ['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES']) #.dropna() # precisa desse dropna()??
         return df
     if uf_select == 'Todas opções' and adm_select != 'Todas opções':
         df = dataframe.loc[dataframe.TP_CATEGORIA_ADMINISTRATIVA == dic_TP_CATEGORIA_ADMINISTRATIVA[adm_select]]
