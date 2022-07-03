@@ -4,6 +4,8 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.style as style
 style.use('tableau-colorblind10')
+import s3fs
+import os
 
 import matplotlib.patches as mpatches
 import pylab as plb
