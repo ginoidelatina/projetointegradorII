@@ -517,10 +517,8 @@ def main():
             options = st.multiselect('Escolha os atributos de interesse para a geração de infográficos.',\
                 ['Cor ou raça', 'Gênero', 'Idade', 'Portabilidade de deficiência'])
             if len(options) != 0:
-                button = st.button('Buscar infográficos')  
-                if button == True:
-                    datafiltred = userSelect(dataframeBruto, uf_select, adm_select, research_ies='Não')
-                    plotData(datafiltred, options)
+                   datafiltred = userSelect(dataframeBruto, uf_select, adm_select, research_ies='Não')
+                   plotData(datafiltred, options)
 
         if uf_select != 'Todas opções' or adm_select != 'Todas opções':
             options = st.multiselect('Escolha os atributos de interesse para a geração de infográficos.',\
@@ -528,7 +526,5 @@ def main():
             research_ies = st.selectbox("Buscar os resultados pelo nome da instituição", ['', 'Sim', 'Não'], key='rs03')
             if research_ies !='' and len(options) != 0:
                 datafiltred = userSelect(dataframeBruto, uf_select, adm_select, research_ies)
-                button = st.button('Buscar infográficos')  
-                if button == True and len(options) != 0:
-                    plotData(datafiltred, options)
+                plotData(datafiltred, options)
 main()
