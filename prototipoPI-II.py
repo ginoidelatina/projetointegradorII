@@ -321,8 +321,6 @@ def plotData(df1, options):
 
         data_d = pd.DataFrame(values_d, columns=['Não', 'Sim', 'Não coletado'])
 
-        bars = ax.patches
-
         result_pct = data_d.div(data_d.sum(1), axis=0)
 
         axd = result_pct.plot(kind='bar',figsize=(16,10),width = 1.0, edgecolor=None)
