@@ -469,7 +469,7 @@ def plotData(df1, options):
 # Exibição da página
 def main():
 
-    dataframe, data_estado = load_data()
+    dataframeBruto, data_estado = load_data()
 
     st.title('Infográficos do Censo da Educação Superior no Brasil')  
     st.markdown('**Hospedagem da base de dados utilizada** -> https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-da-educacao-superior ')
@@ -518,7 +518,7 @@ def main():
             if len(options) != 0:
                 button = st.button('Buscar infográficos')  
                 if button == True:
-                    datafiltred = userSelect(dataframe, uf_select, adm_select, research_ies='Não')
+                    datafiltred = userSelect(dataframeBruto, uf_select, adm_select, research_ies='Não')
                     plotData(datafiltred, options)
 
         if uf_select != 'Todas opções' or adm_select != 'Todas opções':
@@ -526,8 +526,8 @@ def main():
                 ['Cor ou raça', 'Gênero', 'Idade', 'Portabilidade de deficiência'])
             research_ies = st.selectbox("Buscar os resultados pelo nome da instituição", ['', 'Sim', 'Não'], key='rs03')
             if research_ies !='' and len(options) != 0:
-                datafiltred1 = userSelect(dataframe, uf_select, adm_select, research_ies)
+                datafiltred = userSelect(dataframeBruto, uf_select, adm_select, research_ies)
                 button = st.button('Buscar infográficos')  
                 if button == True and len(options) != 0:
-                    plotData(datafiltred1, options)
+                    plotData(datafiltred, options)
 main()
