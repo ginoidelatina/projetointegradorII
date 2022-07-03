@@ -1,12 +1,16 @@
 
+from tkinter import font
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.style as style
 style.use('tableau-colorblind10')
+
+import matplotlib.patches as mpatches
 import pylab as plb
 import dask.dataframe as dd
 plb.rcParams['font.size'] = 20
+import s3fs
 
 # Carregando o arquivo csv.x
 @st.cache(allow_output_mutation=True)
@@ -88,7 +92,6 @@ def plotData(df1, options):
     pd.set_option('max_colwidth', 400)
 
     dataframe = df1.compute()
-    options = options
     if ('Cor ou raça' in options):
         
         st.write('') 
@@ -103,23 +106,34 @@ def plotData(df1, options):
         st.write('') 
 
         #with st.container():
-        columns_r = ['Não declarado', 'Branca','Preta', 'Parda', ' Amarela', 'Indígena', 'Não coletado'] 
-        values_r = [[dataframe['TP_COR_RACA'].where(dataframe.TP_COR_RACA == 0).count(),\
-            dataframe['TP_COR_RACA'].where(dataframe.TP_COR_RACA == 1).count(),\
-                dataframe['TP_COR_RACA'].where(dataframe.TP_COR_RACA == 2).count(),\
-                    dataframe['TP_COR_RACA'].where(dataframe.TP_COR_RACA == 3).count(),\
-                        dataframe['TP_COR_RACA'].where(dataframe.TP_COR_RACA == 4).count(),\
-                            dataframe['TP_COR_RACA'].where(dataframe.TP_COR_RACA == 5).count(),\
-                                dataframe['TP_COR_RACA'].where(dataframe.TP_COR_RACA == 9).count()]]
+        data_temp = dataframe[['ID_ALUNO', 'TP_COR_RACA']]
+        columns_r = ['Não declarado', 'Branca','Preta', 'Parda', 'Amarela', 'Indígena', 'Não coletado'] #EEEEEEEEEEEEEEEIIIII
+        values_r = [[data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 0).count(),\
+            data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 1).count(),\
+                data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 2).count(),\
+                    data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 3).count(),\
+                        data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 4).count(),\
+                            data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 5).count(),\
+                                data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 9).count()]]
 
         data_r = pd.DataFrame(values_r, columns=columns_r) 
-
         result_pct = data_r.div(data_r.sum(1), axis=0)
-        ax = result_pct.plot(kind='bar',figsize=(16,10),width = 0.8,edgecolor='black') 
-        plt.legend(labels=data_r.columns,fontsize= 20)
-        plt.suptitle('Taxa percentual de alunos, por cor ou raça', size=22)
 
-        plt.xticks(fontsize=16) 
+
+        ax = result_pct.plot(kind='bar', figsize=(16,10),width = 2.0, edgecolor='black') #sharex=True, sharey=y
+        
+
+        bars = ax.patches
+        hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
+        for bar, hatch in zip(bars, hatches):
+            bar.set_hatch(hatch)
+  
+        plt.legend(labels=data_r.columns,fontsize= 'x-large')
+        plt.suptitle('Taxa percentual de alunos, por cor ou raça', size=25)
+
+
+        
+        plt.xticks(fontsize=18) 
         for spine in plt.gca().spines.values():
             spine.set_visible(False)
         plt.yticks([])
@@ -130,11 +144,15 @@ def plotData(df1, options):
             x, y = p.get_xy() 
             ax.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
 
+        
+
         ax.set_xlabel('Cor ou Raça')
+
         st.pyplot(plt) 
         plt.clf()
 
-        
+        del data_r, values_r, columns_r
+
 
         dic_cor_raca = {
         0:'Não declarado',
@@ -145,16 +163,18 @@ def plotData(df1, options):
         5:'Indígena',
         9:'Não coletado'}
         
-        #dataframe.insert(1,'nameMapRC', [dic_cor_raca[resp] for resp in dataframe.TP_COR_RACA])  
+        #dataframe.insert(1,'nameMapRC', [dic_cor_raca[resp] for resp in dataframe.TP_COR_RACA])  # 'no_TP_COR_RACA' -> nameMap
         
        # dataframe.insert(valr)
-        dataframe['nameMapRC'] = [dic_cor_raca[resp] for resp in dataframe.TP_COR_RACA]
-        valr = dataframe.filter(items=['ID_ALUNO', 'nameMapRC']).groupby('nameMapRC')\
+        data_temp['nameMapRC'] = [dic_cor_raca[resp] for resp in data_temp.TP_COR_RACA]
+        valr = data_temp[['ID_ALUNO', 'nameMapRC']].groupby('nameMapRC')\
             .count().sort_values(by='ID_ALUNO', ascending=False)
-        valr= valr.reset_index()
+        valr= valr.reset_index() # .reset_index(drop= true)?
         valr = valr.rename(columns={'ID_ALUNO': 'Quantidade de alunos'})
         valr = valr.rename(columns={'nameMapRC': 'Cor ou raça' })
         st.table(valr)
+
+        del valr
 
 
 
@@ -171,23 +191,25 @@ def plotData(df1, options):
 
         st.write('') 
 
+        data_temp = dataframe[['TP_SEXO', 'ID_ALUNO']]
         labels_g = ['Feminino', 'Masculino']
-        values_g = [dataframe['TP_SEXO'].where(dataframe.TP_SEXO == 1).count(), dataframe['TP_SEXO'].where(dataframe.TP_SEXO == 2).count()]
+        values_g = [data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 1).count(), data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 2).count()]
         
-        
+        #colors = ['blueviolet','orange']
         fig, axg = plt.subplots(figsize=(16,10))
-        axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60)  
+        axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)  ####### shadow = False
         fig.suptitle('Taxa percentual de alunos, por gênero', size=25)
 
-        #draw circle
-        #centre_circle = plt.Circle((0,0),0.70,fc='white') 
+        
         fig = plt.gcf()
 
         axg.axis('equal')
         plt.tight_layout()
-        plt.legend(labels=labels_g)
+        plt.legend(labels=labels_g, fontsize = 'x-large')
         st.pyplot(plt) 
         plt.clf()
+
+        del labels_g, values_g
 
         st.text('O Censo da Educação Superior coletou apenas gêneros binários.')
 
@@ -200,17 +222,18 @@ def plotData(df1, options):
         dic_genero = {
         1:'Feminino',
         2:'Masculino'}
-        dataframe['nameMapGENERO'] = [dic_genero[resp] for resp in dataframe.TP_SEXO]  
+        data_temp['nameMapGENERO'] = [dic_genero[resp] for resp in data_temp.TP_SEXO]  
         
-        valr = dataframe.filter(items=['ID_ALUNO', 'nameMapGENERO']).groupby('nameMapGENERO')\
+        valr = data_temp[['ID_ALUNO', 'nameMapGENERO']].groupby('nameMapGENERO')\
             .count().sort_values(by='ID_ALUNO', ascending=False)
         valr= valr.reset_index()
         valr = valr.rename(columns={'ID_ALUNO': 'Quantidade de alunos'})
         valr = valr.rename(columns={'nameMapGENERO': 'Gênero'})
         st.table(valr)
 
+        del valr
 
-    #################################################################################################################
+    ############################################################################################################################3
     if ('Idade' in options):
 
         st.write('') 
@@ -223,11 +246,13 @@ def plotData(df1, options):
 
         st.write('') 
 
-        axi= dataframe.filter(items=['ID_ALUNO', 'NU_IDADE']).groupby('NU_IDADE').count().plot(figsize=(20,10))  
+        data_temp = dataframe[['ID_ALUNO', 'NU_IDADE']]
+        axi= data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE').count()\
+            .plot(figsize=(20,10)) #fillstyle = 'full'  ##### mudar para todos
         axi.get_legend().remove()
 
-        axi.set_ylabel('Quantidade de alunos')
-        axi.set_xlabel('Idade')
+        axi.set_ylabel('Quantidade de alunos', fontsize = 18)
+        axi.set_xlabel('Idade', fontsize = 18)
         plt.suptitle('Taxa de distribuição de alunos, por idade', size=25)
         ticks = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110]
         plt.xticks(ticks, ticks)
@@ -247,7 +272,7 @@ def plotData(df1, options):
         with col1:
             st.markdown('Dados relativos à idade, organizados por ordem de valor (Rol).')  
 
-            valage = dataframe.filter(items=['ID_ALUNO', 'NU_IDADE']).groupby('NU_IDADE')\
+            valage = data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE')\
                 .count().sort_values(by='NU_IDADE', ascending=True)
             valage = valage.reset_index()
             valage = valage.astype(int) 
@@ -260,7 +285,7 @@ def plotData(df1, options):
             st.markdown('Dados relativos à idade, organizados por frequência.')
             
 
-            valage1 = dataframe.filter(items=['ID_ALUNO', 'NU_IDADE']).groupby('NU_IDADE')\
+            valage1 = data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE')\
                 .count().sort_values(by='ID_ALUNO', ascending=False)
             valage1 = valage1.reset_index()
             valage1 = valage1.astype(int)
@@ -274,7 +299,7 @@ def plotData(df1, options):
 
             
 
-    #################################################################################################################
+    ######################################################################################################
     if ('Portabilidade de deficiência' in options):
         st.write('') 
         st.write('') 
@@ -288,20 +313,30 @@ def plotData(df1, options):
 
         st.write('') 
 
-        values_d = [[dataframe['IN_DEFICIENCIA'].where(dataframe.IN_DEFICIENCIA == 0).count(),\
-            dataframe['IN_DEFICIENCIA'].where(dataframe.IN_DEFICIENCIA == 1).count(),\
-                dataframe['IN_DEFICIENCIA'].where(dataframe.IN_DEFICIENCIA == 9).count()]]
+        data_temp = dataframe[['ID_ALUNO', 'IN_DEFICIENCIA']]
+
+        values_d = [[data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 0).count(),\
+            data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 1).count(),\
+                data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 9).count()]]
 
         data_d = pd.DataFrame(values_d, columns=['Não', 'Sim', 'Não coletado'])
 
+        bars = ax.patches
 
         result_pct = data_d.div(data_d.sum(1), axis=0)
 
-        axd = result_pct.plot(kind='bar',figsize=(16,10),width = 0.6, edgecolor=None)
-        plt.legend(labels=data_d.columns,fontsize= 20)
-        plt.suptitle('Taxa percentual de alunos, por portabilidade de deficiência', size=22)
+        axd = result_pct.plot(kind='bar',figsize=(16,10),width = 1.0, edgecolor=None)
 
-        plt.xticks(fontsize=14)
+        bars = axd.patches
+        hatches = ('//', '.', 'o')
+        for bar, hatch in zip(bars, hatches):
+            bar.set_hatch(hatch)
+
+
+        plt.legend(labels=data_d.columns,fontsize= 'x-large')
+        plt.suptitle('Taxa percentual de alunos, por portabilidade de deficiência', size=25)
+
+        plt.xticks(fontsize=18)
         for spine in plt.gca().spines.values():
             spine.set_visible(False)
         plt.yticks([])
@@ -315,6 +350,8 @@ def plotData(df1, options):
         axd.set_xlabel('Portabilidade de deficiência')
         st.pyplot(plt) 
         plt.clf()
+
+        del values_d, data_d
 
         st.write('') 
 
@@ -353,11 +390,18 @@ def plotData(df1, options):
         
 
         result_pct = df1.div(df1.sum(1), axis=0)
-        ax = result_pct.plot(kind='bar',figsize=(16,10),width = 0.8, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
-        plt.legend(labels=df1.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
-        plt.suptitle('Percentual de alunos com deficiência, transtorno global do desenvolvimento ou altas habilidades/superdotação', size=22)
+        ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
+        
+        bars = ax.patches
+        hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
+        for bar, hatch in zip(bars, hatches):
+            bar.set_hatch(hatch)
 
-        plt.xticks(fontsize=20) ######## era 14
+        plt.legend(labels=df1.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
+        plt.suptitle('Percentual de alunos com deficiência, transtorno global do desenvolvimento ou altas habilidades/superdotação', size=25)
+
+
+        plt.xticks(fontsize=20)
         for spine in plt.gca().spines.values():
             spine.set_visible(False)
         plt.yticks([])
@@ -388,7 +432,13 @@ def plotData(df1, options):
         color_list = ['#d73027', '#fc8d59', '#fee090', '#91bfdb', '#4575b4', '#bae4bc', '#7bccc4']
 
         result_pct = df1.div(df1.sum(1), axis=0)
-        ax = result_pct.plot(kind='bar',figsize=(16,10),width = 0.8, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
+        ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
+
+        bars = ax.patches
+        hatches = ('//', '.', '*', 'o', '.O', 'xx','++', '|', '-')
+        for bar, hatch in zip(bars, hatches):
+            bar.set_hatch(hatch)
+
         plt.legend(labels=df1.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
 
         plt.xticks(fontsize=20) 
@@ -405,6 +455,7 @@ def plotData(df1, options):
         st.pyplot(plt) 
         plt.clf()
 
+        del values_d, labels_d,df1
 
 
         st.text(""" Os nomes dos atributos das legendas acima seguem a descrição do Censo da Educação Superior do Inep.
@@ -424,21 +475,31 @@ def main():
     data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
     dataframe = load_data()
 
-    st.title('Acesso à Educação Superior')  
-    st.header('Sobre')
+    st.title('Infográficos do Censo da Educação Superior no Brasil')  
+    st.markdown('**Hospedagem da base de dados utilizada** -> https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-da-educacao-superior ')
+
     st.write('') 
     st.write('')
-    '''
-    Esta página web tem como objetivo partilhar análises descritas sobre o acesso à Educação Superior no Brasil, por meio de atributos sociais relativos à raça ou cor, gênero, idade e 
-    portabilidade de deficiência. Em face da perspectiva de utilização de infográficos interativos, compreende-se que poderemos facilitar o fomento de questionamentos sobre a questão
-    de inclusão no ensino superior.
 
-    A criação deste site é consequência da pesquisa desenvolvida para realização do Projeto Integrador II, disciplina da Universidade Virtual do Estado
-    de São Paulo (UNIVESP), bem como, do desejo de facilitar a obtenção de infográficos que descrevem os aspectos sociais relacionados ao acesso 
-    à educação superior.
-    Aproveite os dados disponibilizados. Em breve estaremos publicando análises mais detalhadas relativas à portabilidade de deficiência e, também,
-    de novos modelos para manipulação e visualização de dados.
-    ''' 
+    st.markdown("Esta página web tem como objetivo partilhar análises descritas sobre o acesso à Educação Superior no Brasil, "
+                "por meio de atributos sociais relativos à raça ou cor, gênero, idade e portabilidade de deficiência. " 
+                "Em face da perspectiva de utilização de infográficos interativos, compreende-se que poderemos facilitar "
+                "o fomento de questionamentos sobre a questão de inclusão no ensino superior."
+                )
+    st.markdown(" A criação deste site é consequência da pesquisa desenvolvida para realização do Projeto Integrador, "
+                "disciplina da Universidade Virtual do Estado de São Paulo (UNIVESP), bem como, do desejo de facilitar a "
+                 "obtenção de infográficos que descrevem os aspectos sociais relacionados ao acesso à educação superior. "
+                 )
+
+    
+
+    st.markdown("Por último, para este projeto utilizamos a otimização de mapas de cores levando em consideração a deficiência "
+                "de visão de cores para permitir a interpretação mais precisa dos infográficos. Para tornar a visualização de " 
+                "dados mais amigáveis e acessíveis,também aplicamos diferentes formas/marcadores para pontos de dados (círculos, "
+                "estrelas, quadrados...), bem como diferentes estilos de linhas (linhas sólidas, tracejadas, pontilhadas). "
+                "Aproveitem os dados disponibilizados. Em breve estaremos publicando análises mais detalhadas e, também, novos " 
+                "modelos para manipulação e visualização de dados. ")
+    
     st.write('') 
     st.write('')
 
@@ -474,5 +535,3 @@ def main():
                 if button == True and len(options) != 0:
                     plotData(datafiltred1, options)
 main()
-        
-    
