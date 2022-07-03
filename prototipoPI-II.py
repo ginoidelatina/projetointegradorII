@@ -337,11 +337,11 @@ def plotData(df1, options):
         for spine in plt.gca().spines.values():
             spine.set_visible(False)
         plt.yticks([])
-        x, y = p.get_xy() 
 
         for p in axd.patches:
             width = p.get_width()
             height = p.get_height()
+            x, y = p.get_xy()
             axd.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
 
         axd.set_xlabel('Portabilidade de deficiência')
