@@ -15,7 +15,7 @@ import s3fs
 @st.cache(allow_output_mutation=True)
 def load_data():
     df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO', use_legacy_dataset = False)
-    data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1", use_legacy_dataset=False) 
+    data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
     return df, data_estado
 
 # Campos selecionados pelo usuário.
