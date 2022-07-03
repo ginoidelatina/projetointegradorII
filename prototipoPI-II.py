@@ -1,27 +1,28 @@
-    
+
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.style as style
 style.use('tableau-colorblind10')
-import s3fs
-import os
 
 import matplotlib.patches as mpatches
 import pylab as plb
+import dask.dataframe as dd
 plb.rcParams['font.size'] = 20
+import s3fs
+import os
 
 # Carregando o arquivo csv.x
 @st.cache(allow_output_mutation=True)
 def load_data():
-
-    df = pd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
+    df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
     data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
     return df, data_estado
 
 # Campos selecionados pelo usuário.
-def userSelect(dataframe, uf_select, adm_select, research_ies):
-    dataframe = dataframe
+
+def userSelect(dataframeBruto, uf_select, adm_select, research_ies):
+    dataframe = dataframeBruto
     dic_TP_CATEGORIA_ADMINISTRATIVA = {
     'Pública Federal':1,
     'Pública Estadual':2,
@@ -31,20 +32,24 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
     'Especial':7}
 
     if uf_select == 'Todas opções' and adm_select == 'Todas opções':
-        df = dataframe.drop(columns = ['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES']) 
+        df = dataframe.drop(columns = ['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES'])
+        del dataframe
         return df
     if uf_select == 'Todas opções' and adm_select != 'Todas opções':
         df = dataframe.loc[dataframe.TP_CATEGORIA_ADMINISTRATIVA == dic_TP_CATEGORIA_ADMINISTRATIVA[adm_select]]
         df = df.drop(columns = ['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES']) # tira o 'TP_CATEGORIA_ADMINISTRATIVA'?
+        del dataframe
         return df
 
     if uf_select != 'Todas opções' and adm_select == 'Todas opções':
         if research_ies == 'Não':
             df = dataframe.loc[dataframe.UF == uf_select]
             df = df.drop(columns = ['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES'])
+            del dataframe
             return df
         if research_ies == 'Sim':
             df_temp = dataframe[['NO_IES', 'UF']].where(dataframe.UF == uf_select).dropna()
+            df_temp = df_temp.compute()
             nome_ies = df_temp['NO_IES'].unique()
             nome_ies = nome_ies.tolist()
             nome_ies.sort()
@@ -56,6 +61,7 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
                 df = dataframe.loc[dataframe.UF == uf_select]
                 df = df.loc[df.NO_IES == nome_ies_select ]
                 df = df.drop(columns = ['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES'])
+                del dataframe
                 return df
     
     if uf_select != 'Todas opções' and adm_select != 'Todas opções':
@@ -63,11 +69,14 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
             df = dataframe.loc[dataframe.UF == uf_select]
             df = df.loc[df.TP_CATEGORIA_ADMINISTRATIVA == dic_TP_CATEGORIA_ADMINISTRATIVA[adm_select]]
             df = df.drop(columns = ['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES'])
+            del dataframe
             return df
 
         if research_ies == 'Sim':
             df_temp = dataframe[['NO_IES', 'UF', 'TP_CATEGORIA_ADMINISTRATIVA']].where(dataframe.UF == uf_select).dropna()  
             df_temp = df_temp[['NO_IES', 'TP_CATEGORIA_ADMINISTRATIVA']].where(dataframe.TP_CATEGORIA_ADMINISTRATIVA == dic_TP_CATEGORIA_ADMINISTRATIVA[adm_select]).dropna()
+            df_temp = df_temp.compute()
+
             nome_ies = df_temp['NO_IES'].unique()
             nome_ies = nome_ies.tolist()
             nome_ies.sort()
@@ -80,6 +89,7 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
                 df = df.loc[df.TP_CATEGORIA_ADMINISTRATIVA == dic_TP_CATEGORIA_ADMINISTRATIVA[adm_select]]
                 df = df.loc[df.NO_IES == nome_ies_select]
                 df = df.drop(columns = ['TP_CATEGORIA_ADMINISTRATIVA', 'UF', 'NO_IES'])
+                del dataframe
                 return df
 
 
@@ -90,7 +100,6 @@ def plotData(df1, options):
 
     pd.set_option('max_colwidth', 400)
 
-    dataframe = df1
     if ('Cor ou raça' in options):
         
         st.write('') 
@@ -103,9 +112,9 @@ def plotData(df1, options):
         ############# GRAPH
 
         st.write('') 
+        data_temp = df1[['ID_ALUNO', 'TP_COR_RACA']]
+        data_temp = data_temp.compute()
 
-        #with st.container():
-        data_temp = dataframe[['ID_ALUNO', 'TP_COR_RACA']]
         columns_r = ['Não declarado', 'Branca','Preta', 'Parda', 'Amarela', 'Indígena', 'Não coletado'] #EEEEEEEEEEEEEEEIIIII
         values_r = [[data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 0).count(),\
             data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 1).count(),\
@@ -162,9 +171,7 @@ def plotData(df1, options):
         5:'Indígena',
         9:'Não coletado'}
         
-        #dataframe.insert(1,'nameMapRC', [dic_cor_raca[resp] for resp in dataframe.TP_COR_RACA])  # 'no_TP_COR_RACA' -> nameMap
         
-       # dataframe.insert(valr)
         data_temp['nameMapRC'] = [dic_cor_raca[resp] for resp in data_temp.TP_COR_RACA]
         valr = data_temp[['ID_ALUNO', 'nameMapRC']].groupby('nameMapRC')\
             .count().sort_values(by='ID_ALUNO', ascending=False)
@@ -173,7 +180,7 @@ def plotData(df1, options):
         valr = valr.rename(columns={'nameMapRC': 'Cor ou raça' })
         st.table(valr)
 
-        del valr
+        del valr, data_temp
 
 
 
@@ -189,14 +196,15 @@ def plotData(df1, options):
         ############# GRAPH
 
         st.write('') 
-
-        data_temp = dataframe[['TP_SEXO', 'ID_ALUNO']]
+        data_temp = df1[['ID_ALUNO', 'TP_SEXO']]
+        data_temp = data_temp.compute()
+        #data_temp = dataframe[['TP_SEXO', 'ID_ALUNO']]
         labels_g = ['Feminino', 'Masculino']
         values_g = [data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 1).count(), data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 2).count()]
         
         #colors = ['blueviolet','orange']
         fig, axg = plt.subplots(figsize=(16,10))
-        axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)  ####### shadow = False
+        axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)  
         fig.suptitle('Taxa percentual de alunos, por gênero', size=25)
 
         
@@ -230,9 +238,9 @@ def plotData(df1, options):
         valr = valr.rename(columns={'nameMapGENERO': 'Gênero'})
         st.table(valr)
 
-        del valr
+        del valr, data_temp
 
-    ############################################################################################################################3
+    ############################################################################################################################
     if ('Idade' in options):
 
         st.write('') 
@@ -244,8 +252,9 @@ def plotData(df1, options):
         ############# TABLE
 
         st.write('') 
-
-        data_temp = dataframe[['ID_ALUNO', 'NU_IDADE']]
+        data_temp= df1[['ID_ALUNO', 'NU_IDADE']]
+        data_temp = data_temp.compute()
+        #data_temp = dataframe[['ID_ALUNO', 'NU_IDADE']]
         axi= data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE').count()\
             .plot(figsize=(20,10)) #fillstyle = 'full'  ##### mudar para todos
         axi.get_legend().remove()
@@ -292,7 +301,7 @@ def plotData(df1, options):
             st.write(pd.DataFrame({
                 'QUANTIDADE DE ALUNOS': valage1.ID_ALUNO,
                 'IDADE' : valage1.NU_IDADE}))
-        del valage, valage1
+        del valage, valage1, data_temp
 
             
 
@@ -312,7 +321,10 @@ def plotData(df1, options):
 
         st.write('') 
 
-        data_temp = dataframe[['ID_ALUNO', 'IN_DEFICIENCIA']]
+        data_temp = df1[['ID_ALUNO', 'IN_DEFICIENCIA']]
+        data_temp = data_temp.compute()
+
+        #data_temp = dataframe[['ID_ALUNO', 'IN_DEFICIENCIA']]
 
         values_d = [[data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 0).count(),\
             data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 1).count(),\
@@ -341,7 +353,7 @@ def plotData(df1, options):
         for p in axd.patches:
             width = p.get_width()
             height = p.get_height()
-            x, y = p.get_xy()
+            x, y = p.get_xy() 
             axd.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
 
         axd.set_xlabel('Portabilidade de deficiência')
@@ -363,14 +375,23 @@ def plotData(df1, options):
 
         ################
 
-        dataframe['nameMapDEF'] = [dic_IN_DEF[resp] for resp in dataframe.IN_DEFICIENCIA]       
-        valr = dataframe.filter(items=['ID_ALUNO', 'nameMapDEF']).groupby('nameMapDEF')\
+        data_temp['nameMapDEF'] = [dic_IN_DEF[resp] for resp in data_temp.IN_DEFICIENCIA]       
+        vald = data_temp.filter(items=['ID_ALUNO', 'nameMapDEF']).groupby('nameMapDEF')\
                 .count().sort_values(by='ID_ALUNO', ascending=False)
-        valr= valr.reset_index()
-        valr = valr.rename(columns={'ID_ALUNO': 'Quantidade de alunos'})
-        valr = valr.rename(columns={'nameMapDEF': 'Portabilidade de deficiência' })
-        st.table(valr)
+        valr= vald.reset_index()
+        vald = vald.rename(columns={'ID_ALUNO': 'Quantidade de alunos'})
+        vald = vald.rename(columns={'nameMapDEF': 'Portabilidade de deficiência' })
+        st.table(vald)
 
+        del data_temp, vald
+
+        listTemp = ['ID_ALUNO','IN_DEFICIENCIA_AUDITIVA', 'IN_DEFICIENCIA_FISICA', 'IN_DEFICIENCIA_INTELECTUAL', 'IN_DEFICIENCIA_MULTIPLA',\
+            'IN_DEFICIENCIA_SURDEZ', 'IN_DEFICIENCIA_SURDOCEGUEIRA']
+
+        dataframe = df1[listTemp]
+        dataframe = dataframe.compute()
+
+        
 
         labels_d = ['pessoa com deficiência auditiva', 'pessoa com deficiência física', 'pessoa com deficiência intelectual',\
             'pessoa com deficiência múltipla','pessoa surda','pessoa com surdocegueira']
@@ -382,11 +403,11 @@ def plotData(df1, options):
                                         dataframe['IN_DEFICIENCIA_SURDEZ'].where(dataframe.IN_DEFICIENCIA_SURDEZ == 1).count(),\
                                             dataframe['IN_DEFICIENCIA_SURDOCEGUEIRA'].where(dataframe.IN_DEFICIENCIA_SURDOCEGUEIRA == 1).count()]]
                          
-        df1 = pd.DataFrame(values_d, columns=labels_d).dropna() 
+        data_d = pd.DataFrame(values_d, columns=labels_d)
         color_list = ['#d73027', '#fc8d59', '#fee090', '#91bfdb', '#4575b4', '#7bccc4']
         
 
-        result_pct = df1.div(df1.sum(1), axis=0)
+        result_pct = data_d.div(data_d.sum(1), axis=0)
         ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
         
         bars = ax.patches
@@ -412,6 +433,13 @@ def plotData(df1, options):
         st.pyplot(plt) 
         plt.clf()
 
+        del dataframe, listTemp, labels_d, values_d, data_d
+
+        listTemp =  ['ID_ALUNO', 'IN_DEFICIENCIA_BAIXA_VISAO', 'IN_DEFICIENCIA_CEGUEIRA', 'IN_DEFICIENCIA_SUPERDOTACAO', 'IN_TGD_AUTISMO', 'IN_TGD_SINDROME_ASPERGER',\
+            'IN_TGD_SINDROME_RETT','IN_TGD_TRANSTOR_DESINTEGRATIVO']        
+        dataframe = df1[listTemp]
+        dataframe = dataframe.compute()
+
 
         labels_d = ['pessoa com baixa visão', 'pessoa cega','pessoa com altas habilidades/superdotação', 'pessoa com autismo', 'pessoa com Síndrome de Asperger',\
             'pessoa com Síndrome de Rett', 'pessoa com Transtorno Desintegrativo da Infância']
@@ -424,7 +452,7 @@ def plotData(df1, options):
                             dataframe['IN_TGD_SINDROME_RETT'].where(dataframe.IN_TGD_SINDROME_RETT == 1).count(),
                                  dataframe['IN_TGD_TRANSTOR_DESINTEGRATIVO'].where(dataframe.IN_TGD_TRANSTOR_DESINTEGRATIVO == 1).count()]]
 
-        df1 = pd.DataFrame(values_d, columns=labels_d).dropna()
+        df1 = pd.DataFrame(values_d, columns=labels_d)
 
         color_list = ['#d73027', '#fc8d59', '#fee090', '#91bfdb', '#4575b4', '#bae4bc', '#7bccc4']
 
@@ -432,7 +460,7 @@ def plotData(df1, options):
         ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
 
         bars = ax.patches
-        hatches = ('//', '.', '*', 'o', '.O', 'xx','++', '|', '-')
+        hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
         for bar, hatch in zip(bars, hatches):
             bar.set_hatch(hatch)
 
@@ -452,7 +480,7 @@ def plotData(df1, options):
         st.pyplot(plt) 
         plt.clf()
 
-        del values_d, labels_d,df1
+        del values_d, labels_d,df1, dataframe
 
 
         st.text(""" Os nomes dos atributos das legendas acima seguem a descrição do Censo da Educação Superior do Inep.
@@ -515,8 +543,10 @@ def main():
             options = st.multiselect('Escolha os atributos de interesse para a geração de infográficos.',\
                 ['Cor ou raça', 'Gênero', 'Idade', 'Portabilidade de deficiência'])
             if len(options) != 0:
-                   datafiltred = userSelect(dataframeBruto, uf_select, adm_select, research_ies='Não')
-                   plotData(datafiltred, options)
+                button = st.button('Buscar infográficos')  
+                if button == True:
+                    datafiltred = userSelect(dataframeBruto, uf_select, adm_select, research_ies='Não')
+                    plotData(datafiltred, options)
 
         if uf_select != 'Todas opções' or adm_select != 'Todas opções':
             options = st.multiselect('Escolha os atributos de interesse para a geração de infográficos.',\
@@ -524,5 +554,7 @@ def main():
             research_ies = st.selectbox("Buscar os resultados pelo nome da instituição", ['', 'Sim', 'Não'], key='rs03')
             if research_ies !='' and len(options) != 0:
                 datafiltred = userSelect(dataframeBruto, uf_select, adm_select, research_ies)
-                plotData(datafiltred, options)
+                button = st.button('Buscar infográficos')  
+                if button == True and len(options) != 0:
+                    plotData(datafiltred, options)
 main()
