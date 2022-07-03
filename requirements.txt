@@ -4,3 +4,4 @@ numpy==1.21.4
 pandas==1.2.4
 s3fs==0.4.2
 streamlit==1.10.0
+pyarrow 4.0.1
