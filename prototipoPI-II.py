@@ -156,7 +156,7 @@ def plotData(df1, options):
 
         ax.set_xlabel('Cor ou Raça')
 
-        st.pyplot(plt.png) 
+        st.pyplot(plt) 
         plt.clf()
 
         del data_r, values_r, columns_r
