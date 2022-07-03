@@ -1,4 +1,4 @@
-
+    
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
@@ -9,13 +9,13 @@ import os
 
 import matplotlib.patches as mpatches
 import pylab as plb
-import dask.dataframe as dd
 plb.rcParams['font.size'] = 20
 
 # Carregando o arquivo csv.x
 @st.cache(allow_output_mutation=True)
 def load_data():
-    df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
+
+    df = pd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
     data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
     return df, data_estado
 
@@ -45,7 +45,6 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
             return df
         if research_ies == 'Sim':
             df_temp = dataframe[['NO_IES', 'UF']].where(dataframe.UF == uf_select).dropna()
-            df_temp = df_temp.compute()
             nome_ies = df_temp['NO_IES'].unique()
             nome_ies = nome_ies.tolist()
             nome_ies.sort()
@@ -69,7 +68,6 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
         if research_ies == 'Sim':
             df_temp = dataframe[['NO_IES', 'UF', 'TP_CATEGORIA_ADMINISTRATIVA']].where(dataframe.UF == uf_select).dropna()  
             df_temp = df_temp[['NO_IES', 'TP_CATEGORIA_ADMINISTRATIVA']].where(dataframe.TP_CATEGORIA_ADMINISTRATIVA == dic_TP_CATEGORIA_ADMINISTRATIVA[adm_select]).dropna()
-            df_temp = df_temp.compute()
             nome_ies = df_temp['NO_IES'].unique()
             nome_ies = nome_ies.tolist()
             nome_ies.sort()
@@ -92,7 +90,7 @@ def plotData(df1, options):
 
     pd.set_option('max_colwidth', 400)
 
-    dataframe = df1.compute()
+    dataframe = df1
     if ('Cor ou raça' in options):
         
         st.write('') 
