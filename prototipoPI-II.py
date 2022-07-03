@@ -16,7 +16,8 @@ import s3fs
 @st.cache(allow_output_mutation=True)
 def load_data():
     df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
-    return df
+    data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
+    return df, data_estado
 
 # Campos selecionados pelo usuário.
 def userSelect(dataframe, uf_select, adm_select, research_ies):
@@ -471,9 +472,7 @@ def plotData(df1, options):
 # Exibição da página
 def main():
 
-
-    data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
-    dataframe = load_data()
+    dataframe, data_estado = load_data()
 
     st.title('Infográficos do Censo da Educação Superior no Brasil')  
     st.markdown('**Hospedagem da base de dados utilizada** -> https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-da-educacao-superior ')
