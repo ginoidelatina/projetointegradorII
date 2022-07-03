@@ -4,7 +4,6 @@ pandas==1.4.2
 pandas-profiling==3.1.0
 matplotlib==3.3.4
 dask==2021.4.0
-dask-core==021.4.0
 pip==22.1.2
 s3fs==2021.11.1
 s3transfer==0.5.0
