@@ -9,7 +9,6 @@ import matplotlib.patches as mpatches
 import pylab as plb
 import dask.dataframe as dd
 plb.rcParams['font.size'] = 20
-import s3fs
 
 # Carregando o arquivo csv.x
 @st.cache(allow_output_mutation=True)
