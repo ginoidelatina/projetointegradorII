@@ -13,7 +13,7 @@ import s3fs
 import os
 
 # Carregando o arquivo csv.x
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, ttl=24*3600)
 def load_data():
     df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
     data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
@@ -95,7 +95,7 @@ def userSelect(dataframeBruto, uf_select, adm_select, research_ies):
 
 
 # Plotagem dos dados
-#@st.cache(suppress_st_warning=True)
+@st.cache(ttl=24*3600)
 def plotData(df1, options):
 
     pd.set_option('max_colwidth', 400)
@@ -156,7 +156,7 @@ def plotData(df1, options):
 
         ax.set_xlabel('Cor ou Raça')
 
-        st.pyplot(plt) 
+        st.pyplot(plt.png) 
         plt.clf()
 
         del data_r, values_r, columns_r
