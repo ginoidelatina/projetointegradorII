@@ -10,12 +10,12 @@ import pylab as plb
 import dask.dataframe as dd
 plb.rcParams['font.size'] = 20
 import s3fs
-import os
 
 # Carregando o arquivo csv.x
-@st.cache(allow_output_mutation=True, ttl=24*3600)
+@st.cache(allow_output_mutation=True)
 def load_data():
-    df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
+    #df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
+    df = dd.read_parquet('./base-dados/censo.parquetNO_CO')
     data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
     return df, data_estado
 
@@ -95,7 +95,7 @@ def userSelect(dataframeBruto, uf_select, adm_select, research_ies):
 
 
 # Plotagem dos dados
-@st.cache(ttl=24*3600, suppress_st_warning=True)
+#@st.cache(suppress_st_warning=True)
 def plotData(df1, options):
 
     pd.set_option('max_colwidth', 400)
@@ -112,17 +112,16 @@ def plotData(df1, options):
         ############# GRAPH
 
         st.write('') 
-        data_temp = df1[['ID_ALUNO', 'TP_COR_RACA']]
-        data_temp = data_temp.compute()
 
         columns_r = ['Não declarado', 'Branca','Preta', 'Parda', 'Amarela', 'Indígena', 'Não coletado'] #EEEEEEEEEEEEEEEIIIII
-        values_r = [[data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 0).count(),\
-            data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 1).count(),\
-                data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 2).count(),\
-                    data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 3).count(),\
-                        data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 4).count(),\
-                            data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 5).count(),\
-                                data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 9).count()]]
+        values_r = [[len(df1.loc[df1.TP_COR_RACA == 0]),\
+            len(df1.loc[df1.TP_COR_RACA == 1]),\
+                len(df1.loc[df1.TP_COR_RACA == 2]),\
+                    len(df1.loc[df1.TP_COR_RACA == 3]),\
+                        len(df1.loc[df1.TP_COR_RACA == 4]),\
+                            len([df1.loc[df1.TP_COR_RACA == 5]]),\
+                                len(df1.loc[df1.TP_COR_RACA == 9])]]
+
 
         data_r = pd.DataFrame(values_r, columns=columns_r) 
         result_pct = data_r.div(data_r.sum(1), axis=0)
@@ -159,8 +158,8 @@ def plotData(df1, options):
         st.pyplot(plt) 
         plt.clf()
 
-        del data_r, values_r, columns_r
 
+        del data_r, values_r, columns_r
 
         dic_cor_raca = {
         0:'Não declarado',
@@ -171,6 +170,8 @@ def plotData(df1, options):
         5:'Indígena',
         9:'Não coletado'}
         
+        data_temp = df1[['ID_ALUNO', 'TP_COR_RACA']]
+        data_temp = data_temp.compute()
         
         data_temp['nameMapRC'] = [dic_cor_raca[resp] for resp in data_temp.TP_COR_RACA]
         valr = data_temp[['ID_ALUNO', 'nameMapRC']].groupby('nameMapRC')\
@@ -198,13 +199,13 @@ def plotData(df1, options):
         st.write('') 
         data_temp = df1[['ID_ALUNO', 'TP_SEXO']]
         data_temp = data_temp.compute()
-        #data_temp = dataframe[['TP_SEXO', 'ID_ALUNO']]
         labels_g = ['Feminino', 'Masculino']
-        values_g = [data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 1).count(), data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 2).count()]
-        
-        #colors = ['blueviolet','orange']
+
+
+        values_g = [[len(df1.loc[df1.TP_SEXO == 1]), len(df1.loc[df1.TP_SEXO == 2])]]
+                
         fig, axg = plt.subplots(figsize=(16,10))
-        axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)  
+        axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)
         fig.suptitle('Taxa percentual de alunos, por gênero', size=25)
 
         
@@ -229,6 +230,8 @@ def plotData(df1, options):
         dic_genero = {
         1:'Feminino',
         2:'Masculino'}
+
+
         data_temp['nameMapGENERO'] = [dic_genero[resp] for resp in data_temp.TP_SEXO]  
         
         valr = data_temp[['ID_ALUNO', 'nameMapGENERO']].groupby('nameMapGENERO')\
@@ -240,7 +243,7 @@ def plotData(df1, options):
 
         del valr, data_temp
 
-    ############################################################################################################################
+    ############################################################################################################################3
     if ('Idade' in options):
 
         st.write('') 
@@ -254,9 +257,9 @@ def plotData(df1, options):
         st.write('') 
         data_temp= df1[['ID_ALUNO', 'NU_IDADE']]
         data_temp = data_temp.compute()
-        #data_temp = dataframe[['ID_ALUNO', 'NU_IDADE']]
+
         axi= data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE').count()\
-            .plot(figsize=(20,10)) #fillstyle = 'full'  ##### mudar para todos
+            .plot(figsize=(20,10)) 
         axi.get_legend().remove()
 
         axi.set_ylabel('Quantidade de alunos', fontsize = 18)
@@ -321,14 +324,10 @@ def plotData(df1, options):
 
         st.write('') 
 
-        data_temp = df1[['ID_ALUNO', 'IN_DEFICIENCIA']]
-        data_temp = data_temp.compute()
-
-        #data_temp = dataframe[['ID_ALUNO', 'IN_DEFICIENCIA']]
-
-        values_d = [[data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 0).count(),\
-            data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 1).count(),\
-                data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 9).count()]]
+        values_d = [[len(df1.loc[df1.IN_DEFICIENCIA == 0]),\
+            len(df1.loc[df1.IN_DEFICIENCIA == 1]),\
+                len(df1.loc[df1.IN_DEFICIENCIA == 9])]]
+            
 
         data_d = pd.DataFrame(values_d, columns=['Não', 'Sim', 'Não coletado'])
 
@@ -374,7 +373,8 @@ def plotData(df1, options):
         9:'Não coletado'}
 
         ################
-
+        data_temp = df1[['ID_ALUNO', 'IN_DEFICIENCIA']]
+        data_temp = data_temp.compute()
         data_temp['nameMapDEF'] = [dic_IN_DEF[resp] for resp in data_temp.IN_DEFICIENCIA]       
         vald = data_temp.filter(items=['ID_ALUNO', 'nameMapDEF']).groupby('nameMapDEF')\
                 .count().sort_values(by='ID_ALUNO', ascending=False)
@@ -385,24 +385,18 @@ def plotData(df1, options):
 
         del data_temp, vald
 
-        listTemp = ['ID_ALUNO','IN_DEFICIENCIA_AUDITIVA', 'IN_DEFICIENCIA_FISICA', 'IN_DEFICIENCIA_INTELECTUAL', 'IN_DEFICIENCIA_MULTIPLA',\
-            'IN_DEFICIENCIA_SURDEZ', 'IN_DEFICIENCIA_SURDOCEGUEIRA']
-
-        dataframe = df1[listTemp]
-        dataframe = dataframe.compute()
-
-        
-
         labels_d = ['pessoa com deficiência auditiva', 'pessoa com deficiência física', 'pessoa com deficiência intelectual',\
             'pessoa com deficiência múltipla','pessoa surda','pessoa com surdocegueira']
         
-        values_d = [[dataframe['IN_DEFICIENCIA_AUDITIVA'].where(dataframe.IN_DEFICIENCIA_AUDITIVA == 1).count(),\
-                            dataframe['IN_DEFICIENCIA_FISICA'].where(dataframe.IN_DEFICIENCIA_FISICA == 1).count(),\
-                                dataframe['IN_DEFICIENCIA_INTELECTUAL'].where(dataframe.IN_DEFICIENCIA_INTELECTUAL == 1).count(),\
-                                    dataframe['IN_DEFICIENCIA_MULTIPLA'].where(dataframe.IN_DEFICIENCIA_MULTIPLA == 1).count(),\
-                                        dataframe['IN_DEFICIENCIA_SURDEZ'].where(dataframe.IN_DEFICIENCIA_SURDEZ == 1).count(),\
-                                            dataframe['IN_DEFICIENCIA_SURDOCEGUEIRA'].where(dataframe.IN_DEFICIENCIA_SURDOCEGUEIRA == 1).count()]]
-                         
+        values_d = [[len(df1.loc[df1.IN_DEFICIENCIA_AUDITIVA == 1]),\
+            len(df1.loc[df1.IN_DEFICIENCIA_FISICA == 1]),\
+                len(df1.loc[df1.IN_DEFICIENCIA_INTELECTUAL == 1]),\
+                    len(df1.loc[df1.IN_DEFICIENCIA_MULTIPLA == 1]),\
+                        len(df1.loc[df1.IN_DEFICIENCIA_SURDEZ == 1]),\
+                            len(df1.loc[df1.TP_COR_RACA == 1]),\
+                                len(df1.loc[df1.IN_DEFICIENCIA_SURDOCEGUEIRA == 1])]]
+            
+        
         data_d = pd.DataFrame(values_d, columns=labels_d)
         color_list = ['#d73027', '#fc8d59', '#fee090', '#91bfdb', '#4575b4', '#7bccc4']
         
@@ -433,25 +427,16 @@ def plotData(df1, options):
         st.pyplot(plt) 
         plt.clf()
 
-        del dataframe, listTemp, labels_d, values_d, data_d
+        del labels_d, values_d, data_d
 
-        listTemp =  ['ID_ALUNO', 'IN_DEFICIENCIA_BAIXA_VISAO', 'IN_DEFICIENCIA_CEGUEIRA', 'IN_DEFICIENCIA_SUPERDOTACAO', 'IN_TGD_AUTISMO', 'IN_TGD_SINDROME_ASPERGER',\
-            'IN_TGD_SINDROME_RETT','IN_TGD_TRANSTOR_DESINTEGRATIVO']        
-        dataframe = df1[listTemp]
-        dataframe = dataframe.compute()
-
-
-        labels_d = ['pessoa com baixa visão', 'pessoa cega','pessoa com altas habilidades/superdotação', 'pessoa com autismo', 'pessoa com Síndrome de Asperger',\
-            'pessoa com Síndrome de Rett', 'pessoa com Transtorno Desintegrativo da Infância']
-
-        values_d = [[dataframe['IN_DEFICIENCIA_BAIXA_VISAO'].where(dataframe.IN_DEFICIENCIA_BAIXA_VISAO == 1).count(),\
-            dataframe['IN_DEFICIENCIA_CEGUEIRA'].where(dataframe.IN_DEFICIENCIA_CEGUEIRA == 1).count(),\
-                dataframe['IN_DEFICIENCIA_SUPERDOTACAO'].where(dataframe.IN_DEFICIENCIA_SUPERDOTACAO == 1).count(),\
-                    dataframe['IN_TGD_AUTISMO'].where(dataframe.IN_TGD_AUTISMO == 1).count(),\
-                        dataframe['IN_TGD_SINDROME_ASPERGER'].where(dataframe.IN_TGD_SINDROME_ASPERGER == 1).count(),\
-                            dataframe['IN_TGD_SINDROME_RETT'].where(dataframe.IN_TGD_SINDROME_RETT == 1).count(),
-                                 dataframe['IN_TGD_TRANSTOR_DESINTEGRATIVO'].where(dataframe.IN_TGD_TRANSTOR_DESINTEGRATIVO == 1).count()]]
-
+        values_d = [[len(df1.loc[df1.IN_DEFICIENCIA_BAIXA_VISAO == 1]),\
+            len(df1.loc[df1.IN_DEFICIENCIA_CEGUEIRA == 1]),\
+                len(df1.loc[df1.IN_DEFICIENCIA_SUPERDOTACAO == 1]),\
+                    len(df1.loc[df1.IN_TGD_AUTISMO == 1]),\
+                        len(df1.loc[df1.IN_TGD_SINDROME_ASPERGER == 1]),\
+                            len(df1.loc[df1.IN_TGD_SINDROME_RETT == 1]),\
+                                len(df1.loc[df1.IN_TGD_TRANSTOR_DESINTEGRATIVO == 1])]]
+            
         df1 = pd.DataFrame(values_d, columns=labels_d)
 
         color_list = ['#d73027', '#fc8d59', '#fee090', '#91bfdb', '#4575b4', '#bae4bc', '#7bccc4']
