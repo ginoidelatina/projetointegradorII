@@ -12,7 +12,7 @@ plb.rcParams['font.size'] = 20
 import s3fs
 
 # Carregando o arquivo csv.x
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, ttl=24*3600)
 def load_data():
     df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
     data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
@@ -158,29 +158,11 @@ def plotData(df1, options):
         plt.clf()
 
 
+    
+
+        st.code("Quantidade de alunos por cor ou raça")
+        st.table(data_r)
         del data_r, values_r, columns_r
-
-        dic_cor_raca = {
-        0:'Não declarado',
-        1:'Branca',
-        2:'Preta',
-        3:'Parda',
-        4:' Amarela',
-        5:'Indígena',
-        9:'Não coletado'}
-        
-        data_temp = df1[['ID_ALUNO', 'TP_COR_RACA']]
-        data_temp = data_temp.compute()
-        
-        data_temp['nameMapRC'] = [dic_cor_raca[resp] for resp in data_temp.TP_COR_RACA]
-        valr = data_temp[['ID_ALUNO', 'nameMapRC']].groupby('nameMapRC')\
-            .count().sort_values(by='ID_ALUNO', ascending=False)
-        valr= valr.reset_index() # .reset_index(drop= true)?
-        valr = valr.rename(columns={'ID_ALUNO': 'Quantidade de alunos'})
-        valr = valr.rename(columns={'nameMapRC': 'Cor ou raça' })
-        st.table(valr)
-
-        del valr, data_temp
 
 
 
@@ -196,15 +178,11 @@ def plotData(df1, options):
         ############# GRAPH
 
         st.write('') 
-        data_temp = df1[['ID_ALUNO', 'TP_SEXO']]
-        data_temp = data_temp.compute()
         labels_g = ['Feminino', 'Masculino']
-
-
-        values_g = [[len(df1.loc[df1.TP_SEXO == 1]), len(df1.loc[df1.TP_SEXO == 2])]]
+        values_g = [len(df1.loc[df1.TP_SEXO == 1]), len(df1.loc[df1.TP_SEXO == 2])]
                 
         fig, axg = plt.subplots(figsize=(16,10))
-        axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)
+        axg.pie(x=values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)
         fig.suptitle('Taxa percentual de alunos, por gênero', size=25)
 
         
@@ -216,31 +194,23 @@ def plotData(df1, options):
         st.pyplot(plt) 
         plt.clf()
 
-        del labels_g, values_g
-
         st.text('O Censo da Educação Superior coletou apenas gêneros binários.')
+
+        del values_g
 
         st.write('') 
 
         ############# TABLE
 
         st.write('') 
+        values_g = [[len(df1.loc[df1.TP_SEXO == 1]), len(df1.loc[df1.TP_SEXO == 2])]]
 
-        dic_genero = {
-        1:'Feminino',
-        2:'Masculino'}
+        data_temp = pd.DataFrame(values_g, columns=labels_g)
 
+        st.code("Quantidade de alunos por gênero")
+        st.table(data_temp)
 
-        data_temp['nameMapGENERO'] = [dic_genero[resp] for resp in data_temp.TP_SEXO]  
-        
-        valr = data_temp[['ID_ALUNO', 'nameMapGENERO']].groupby('nameMapGENERO')\
-            .count().sort_values(by='ID_ALUNO', ascending=False)
-        valr= valr.reset_index()
-        valr = valr.rename(columns={'ID_ALUNO': 'Quantidade de alunos'})
-        valr = valr.rename(columns={'nameMapGENERO': 'Gênero'})
-        st.table(valr)
-
-        del valr, data_temp
+        del values_g, labels_g, data_temp
 
     ############################################################################################################################3
     if ('Idade' in options):
@@ -280,7 +250,7 @@ def plotData(df1, options):
 
         col1, col2 = st.columns(spec=[10,10])
         with col1:
-            st.markdown('Dados relativos à idade, organizados por ordem de valor (Rol).')  
+            st.code('Dados relativos à idade, organizados por ordem de valor (Rol).')  
 
             valage = data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE')\
                 .count().sort_values(by='NU_IDADE', ascending=True)
@@ -292,7 +262,7 @@ def plotData(df1, options):
                 'IDADE' : valage.NU_IDADE})))
 
         with col2:
-            st.markdown('Dados relativos à idade, organizados por frequência.')
+            st.code('Dados relativos à idade, organizados por frequência.')
             
 
             valage1 = data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE')\
@@ -358,7 +328,7 @@ def plotData(df1, options):
         st.pyplot(plt) 
         plt.clf()
 
-        del values_d, data_d
+        del values_d
 
         st.write('') 
 
@@ -366,23 +336,10 @@ def plotData(df1, options):
 
         st.write('') 
 
-        dic_IN_DEF = {
-        0:'Não',
-        1:'Sim',
-        9:'Não coletado'}
+        st.code("Quantidade por portabilidade de deficiência")
+        st.table(data_d)
 
-        ################
-        data_temp = df1[['ID_ALUNO', 'IN_DEFICIENCIA']]
-        data_temp = data_temp.compute()
-        data_temp['nameMapDEF'] = [dic_IN_DEF[resp] for resp in data_temp.IN_DEFICIENCIA]       
-        vald = data_temp.filter(items=['ID_ALUNO', 'nameMapDEF']).groupby('nameMapDEF')\
-                .count().sort_values(by='ID_ALUNO', ascending=False)
-        valr= vald.reset_index()
-        vald = vald.rename(columns={'ID_ALUNO': 'Quantidade de alunos'})
-        vald = vald.rename(columns={'nameMapDEF': 'Portabilidade de deficiência' })
-        st.table(vald)
-
-        del data_temp, vald
+        del data_d
 
         labels_d = ['pessoa com deficiência auditiva', 'pessoa com deficiência física', 'pessoa com deficiência intelectual',\
             'pessoa com deficiência múltipla','pessoa surda','pessoa com surdocegueira']
@@ -392,8 +349,7 @@ def plotData(df1, options):
                 len(df1.loc[df1.IN_DEFICIENCIA_INTELECTUAL == 1]),\
                     len(df1.loc[df1.IN_DEFICIENCIA_MULTIPLA == 1]),\
                         len(df1.loc[df1.IN_DEFICIENCIA_SURDEZ == 1]),\
-                            len(df1.loc[df1.TP_COR_RACA == 1]),\
-                                len(df1.loc[df1.IN_DEFICIENCIA_SURDOCEGUEIRA == 1])]]
+                            len(df1.loc[df1.IN_DEFICIENCIA_SURDOCEGUEIRA == 1])]]
             
         
         data_d = pd.DataFrame(values_d, columns=labels_d)
@@ -408,7 +364,7 @@ def plotData(df1, options):
         for bar, hatch in zip(bars, hatches):
             bar.set_hatch(hatch)
 
-        plt.legend(labels=df1.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
+        plt.legend(labels=data_d.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
         plt.suptitle('Percentual de alunos com deficiência, transtorno global do desenvolvimento ou altas habilidades/superdotação', size=25)
 
 
@@ -428,6 +384,11 @@ def plotData(df1, options):
 
         del labels_d, values_d, data_d
 
+
+
+        labels_d = ['pessoa com baixa visão', 'pessoa cega','pessoa com altas habilidades/superdotação', 'pessoa com autismo', 'pessoa com Síndrome de Asperger',\
+            'pessoa com Síndrome de Rett', 'pessoa com Transtorno Desintegrativo da Infância']
+
         values_d = [[len(df1.loc[df1.IN_DEFICIENCIA_BAIXA_VISAO == 1]),\
             len(df1.loc[df1.IN_DEFICIENCIA_CEGUEIRA == 1]),\
                 len(df1.loc[df1.IN_DEFICIENCIA_SUPERDOTACAO == 1]),\
@@ -436,11 +397,11 @@ def plotData(df1, options):
                             len(df1.loc[df1.IN_TGD_SINDROME_RETT == 1]),\
                                 len(df1.loc[df1.IN_TGD_TRANSTOR_DESINTEGRATIVO == 1])]]
             
-        df1 = pd.DataFrame(values_d, columns=labels_d)
+        dfd = pd.DataFrame(values_d, columns=labels_d)
 
         color_list = ['#d73027', '#fc8d59', '#fee090', '#91bfdb', '#4575b4', '#bae4bc', '#7bccc4']
 
-        result_pct = df1.div(df1.sum(1), axis=0)
+        result_pct = dfd.div(dfd.sum(1), axis=0)
         ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
 
         bars = ax.patches
@@ -448,7 +409,7 @@ def plotData(df1, options):
         for bar, hatch in zip(bars, hatches):
             bar.set_hatch(hatch)
 
-        plt.legend(labels=df1.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
+        plt.legend(labels=dfd.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
 
         plt.xticks(fontsize=20) 
         for spine in plt.gca().spines.values():
@@ -464,7 +425,7 @@ def plotData(df1, options):
         st.pyplot(plt) 
         plt.clf()
 
-        del values_d, labels_d,df1, dataframe
+        del values_d, labels_d,dfd
 
 
         st.text(""" Os nomes dos atributos das legendas acima seguem a descrição do Censo da Educação Superior do Inep.
