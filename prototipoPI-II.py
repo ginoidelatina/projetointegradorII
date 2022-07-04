@@ -94,7 +94,6 @@ def userSelect(dataframeBruto, uf_select, adm_select, research_ies):
 
 
 # Plotagem dos dados
-#@st.cache(suppress_st_warning=True)
 def plotData(df1, options):
 
     pd.set_option('max_colwidth', 400)
