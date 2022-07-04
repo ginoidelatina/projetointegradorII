@@ -3,6 +3,5 @@ numpy==1.21.4
 pandas==1.2.4
 s3fs==2021.11.1 
 streamlit==1.10.0
-dask==2021.4.0
 pyarrow==4.0.1
 
