@@ -86,27 +86,22 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
 
 
 # Plotagem dos dados
-@st.cache(suppress_st_warning=True, ttl=600)
 def plotData(df1, options):
 
     pd.set_option('max_colwidth', 400)
 
-    dataframe = df1.compute()
     if ('Cor ou raça' in options):
+        data_temp = df1[['ID_ALUNO', 'TP_COR_RACA']]
+        data_temp = data_temp.compute()
         
         st.write('') 
         st.subheader('Dados relativos à cor e raça')
         st.write('') 
  
-
-        st.write('') 
-
+    
         ############# GRAPH
 
-        st.write('') 
 
-        #with st.container():
-        data_temp = dataframe[['ID_ALUNO', 'TP_COR_RACA']]
         columns_r = ['Não declarado', 'Branca','Preta', 'Parda', 'Amarela', 'Indígena', 'Não coletado'] #EEEEEEEEEEEEEEEIIIII
         values_r = [[data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 0).count(),\
             data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 1).count(),\
@@ -166,18 +161,16 @@ def plotData(df1, options):
 
     ##############################################################################################################
     if ('Gênero' in options):
-       
+        data_temp = df1[['ID_ALUNO', 'TP_SEXO']]
+        data_temp = data_temp.compute()
+
         st.write('') 
         st.subheader('Dados relativos à gênero')
         st.write('') 
 
-        st.write('') 
-
+                
         ############# GRAPH
 
-        st.write('') 
-
-        data_temp = dataframe[['TP_SEXO', 'ID_ALUNO']]
         labels_g = ['Feminino', 'Masculino']
         values_g = [data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 1).count(), data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 2).count()]
         
@@ -215,16 +208,14 @@ def plotData(df1, options):
 
     ############################################################################################################################3
     if ('Idade' in options):
+        data_temp= df1[['ID_ALUNO', 'NU_IDADE']]
+        data_temp = data_temp.compute()
 
         st.write('') 
         st.subheader('Dados relativos à idade')
         st.write('') 
 
-        st.write('') 
-
         ############# TABLE
-
-        st.write('') 
 
         data_temp = dataframe[['ID_ALUNO', 'NU_IDADE']]
         axi= data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE').count()\
@@ -281,17 +272,14 @@ def plotData(df1, options):
 
     ######################################################################################################
     if ('Portabilidade de deficiência' in options):
-        st.write('') 
+        data_temp = df1[['ID_ALUNO', 'IN_DEFICIENCIA']]
+        data_temp = data_temp.compute()
+        
         st.write('') 
         st.subheader('Dados relativos à portabilidade de deficiência')
         st.write('') 
-        st.write('') 
-
-        st.write('') 
 
         ############# GRAPH
-
-        st.write('') 
 
         data_temp = dataframe[['ID_ALUNO', 'IN_DEFICIENCIA']]
 
@@ -342,6 +330,11 @@ def plotData(df1, options):
 
         del data_d
 
+        listTemp = ['ID_ALUNO','IN_DEFICIENCIA_AUDITIVA', 'IN_DEFICIENCIA_FISICA', 'IN_DEFICIENCIA_INTELECTUAL', 'IN_DEFICIENCIA_MULTIPLA',\
+            'IN_DEFICIENCIA_SURDEZ', 'IN_DEFICIENCIA_SURDOCEGUEIRA']
+
+        dataframe = df1[listTemp]
+        dataframe = dataframe.compute()
 
         labels_d = ['pessoa com deficiência auditiva', 'pessoa com deficiência física', 'pessoa com deficiência intelectual',\
             'pessoa com deficiência múltipla','pessoa surda','pessoa com surdocegueira']
@@ -386,10 +379,13 @@ def plotData(df1, options):
         st.table(data_d)
 
 
-        del labels_d, values_d, data_d                 
+        del labels_d, values_d, data_d, dataframe, listTemp, dataframe                 
         
         
-
+        listTemp =  ['ID_ALUNO', 'IN_DEFICIENCIA_BAIXA_VISAO', 'IN_DEFICIENCIA_CEGUEIRA', 'IN_DEFICIENCIA_SUPERDOTACAO', 'IN_TGD_AUTISMO', 'IN_TGD_SINDROME_ASPERGER',\
+            'IN_TGD_SINDROME_RETT','IN_TGD_TRANSTOR_DESINTEGRATIVO']        
+        dataframe = df1[listTemp]
+        dataframe = dataframe.compute()
 
         labels_d = ['pessoa com baixa visão', 'pessoa cega','pessoa com altas habilidades/superdotação', 'pessoa com autismo', 'pessoa com Síndrome de Asperger',\
             'pessoa com Síndrome de Rett', 'pessoa com Transtorno Desintegrativo da Infância']
@@ -433,8 +429,7 @@ def plotData(df1, options):
         st.code("Quantidade de alunos por tipo de portabilidade de deficiência")
         st.table(dfd)
 
-
-        del values_d, labels_d, dfd
+        del values_d, labels_d, dfd, listTemp, dataframe
 
 
         st.text(""" Os nomes dos atributos das legendas acima seguem a descrição do Censo da Educação Superior do Inep.
