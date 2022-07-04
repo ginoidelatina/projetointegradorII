@@ -337,7 +337,7 @@ def plotData(df1, options):
 
         st.write('') 
 
-        st.code("Quantidade por portabilidade de deficiência")
+        st.code("Quantidade de alunos por portabilidade de deficiência")
         st.table(data_d)
 
         del data_d
@@ -434,7 +434,7 @@ def plotData(df1, options):
         st.table(dfd)
 
 
-        del values_d, labels_d, dfd, dataframe
+        del values_d, labels_d, dfd
 
 
         st.text(""" Os nomes dos atributos das legendas acima seguem a descrição do Censo da Educação Superior do Inep.
