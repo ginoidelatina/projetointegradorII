@@ -8,13 +8,12 @@ import os
 
 import matplotlib.patches as mpatches
 import pylab as plb
-import dask.dataframe as dd
 plb.rcParams['font.size'] = 20
 
 # Carregando o arquivo csv.x
 @st.cache(allow_output_mutation=True, ttl=24*3600)
 def load_data():
-    df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
+    df = pd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
     data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
     return df, data_estado
 
@@ -44,7 +43,6 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
             return df
         if research_ies == 'Sim':
             df_temp = dataframe[['NO_IES', 'UF']].where(dataframe.UF == uf_select).dropna()
-            df_temp = df_temp.compute()
             nome_ies = df_temp['NO_IES'].unique()
             nome_ies = nome_ies.tolist()
             nome_ies.sort()
@@ -68,7 +66,6 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
         if research_ies == 'Sim':
             df_temp = dataframe[['NO_IES', 'UF', 'TP_CATEGORIA_ADMINISTRATIVA']].where(dataframe.UF == uf_select).dropna()  
             df_temp = df_temp[['NO_IES', 'TP_CATEGORIA_ADMINISTRATIVA']].where(dataframe.TP_CATEGORIA_ADMINISTRATIVA == dic_TP_CATEGORIA_ADMINISTRATIVA[adm_select]).dropna()
-            df_temp = df_temp.compute()
             nome_ies = df_temp['NO_IES'].unique()
             nome_ies = nome_ies.tolist()
             nome_ies.sort()
@@ -92,7 +89,6 @@ def plotData(df1, options):
 
     if ('Cor ou raça' in options):
         data_temp = df1[['ID_ALUNO', 'TP_COR_RACA']]
-        data_temp = data_temp.compute()
         
         st.write('') 
         st.subheader('Dados relativos à cor e raça')
@@ -162,7 +158,6 @@ def plotData(df1, options):
     ##############################################################################################################
     if ('Gênero' in options):
         data_temp = df1[['ID_ALUNO', 'TP_SEXO']]
-        data_temp = data_temp.compute()
 
         st.write('') 
         st.subheader('Dados relativos à gênero')
@@ -209,7 +204,6 @@ def plotData(df1, options):
     ############################################################################################################################3
     if ('Idade' in options):
         data_temp= df1[['ID_ALUNO', 'NU_IDADE']]
-        data_temp = data_temp.compute()
 
         st.write('') 
         st.subheader('Dados relativos à idade')
@@ -271,7 +265,6 @@ def plotData(df1, options):
     ######################################################################################################
     if ('Portabilidade de deficiência' in options):
         data_temp = df1[['ID_ALUNO', 'IN_DEFICIENCIA']]
-        data_temp = data_temp.compute()
         
         st.write('') 
         st.subheader('Dados relativos à portabilidade de deficiência')
@@ -331,7 +324,6 @@ def plotData(df1, options):
             'IN_DEFICIENCIA_SURDEZ', 'IN_DEFICIENCIA_SURDOCEGUEIRA']
 
         dataframe = df1[listTemp]
-        dataframe = dataframe.compute()
 
         labels_d = ['pessoa com deficiência auditiva', 'pessoa com deficiência física', 'pessoa com deficiência intelectual',\
             'pessoa com deficiência múltipla','pessoa surda','pessoa com surdocegueira']
@@ -382,7 +374,6 @@ def plotData(df1, options):
         listTemp =  ['ID_ALUNO', 'IN_DEFICIENCIA_BAIXA_VISAO', 'IN_DEFICIENCIA_CEGUEIRA', 'IN_DEFICIENCIA_SUPERDOTACAO', 'IN_TGD_AUTISMO', 'IN_TGD_SINDROME_ASPERGER',\
             'IN_TGD_SINDROME_RETT','IN_TGD_TRANSTOR_DESINTEGRATIVO']        
         dataframe = df1[listTemp]
-        dataframe = dataframe.compute()
 
         labels_d = ['pessoa com baixa visão', 'pessoa cega','pessoa com altas habilidades/superdotação', 'pessoa com autismo', 'pessoa com Síndrome de Asperger',\
             'pessoa com Síndrome de Rett', 'pessoa com Transtorno Desintegrativo da Infância']
