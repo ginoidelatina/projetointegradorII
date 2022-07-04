@@ -8,12 +8,13 @@ import os
 
 import matplotlib.patches as mpatches
 import pylab as plb
+import dask.dataframe as dd
 plb.rcParams['font.size'] = 20
 
 # Carregando o arquivo csv.x
 @st.cache(allow_output_mutation=True, ttl=24*3600)
 def load_data():
-    df = pd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
+    df = dd.read_parquet('s3://pi01.microdadoscensosuperior2019/censo.parquetNO_CO')
     data_estado = pd.read_csv("s3://pi01.microdadoscensosuperior2019/Estados.csv",sep="|", encoding= "ISO-8859-1") 
     return df, data_estado
 
@@ -43,6 +44,7 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
             return df
         if research_ies == 'Sim':
             df_temp = dataframe[['NO_IES', 'UF']].where(dataframe.UF == uf_select).dropna()
+            df_temp = df_temp.compute()
             nome_ies = df_temp['NO_IES'].unique()
             nome_ies = nome_ies.tolist()
             nome_ies.sort()
@@ -66,6 +68,7 @@ def userSelect(dataframe, uf_select, adm_select, research_ies):
         if research_ies == 'Sim':
             df_temp = dataframe[['NO_IES', 'UF', 'TP_CATEGORIA_ADMINISTRATIVA']].where(dataframe.UF == uf_select).dropna()  
             df_temp = df_temp[['NO_IES', 'TP_CATEGORIA_ADMINISTRATIVA']].where(dataframe.TP_CATEGORIA_ADMINISTRATIVA == dic_TP_CATEGORIA_ADMINISTRATIVA[adm_select]).dropna()
+            df_temp = df_temp.compute()
             nome_ies = df_temp['NO_IES'].unique()
             nome_ies = nome_ies.tolist()
             nome_ies.sort()
@@ -87,17 +90,22 @@ def plotData(df1, options):
 
     pd.set_option('max_colwidth', 400)
 
+    dataframe = df1.compute()
     if ('Cor ou raça' in options):
-        data_temp = df1[['ID_ALUNO', 'TP_COR_RACA']]
         
         st.write('') 
         st.subheader('Dados relativos à cor e raça')
         st.write('') 
  
-    
+
+        st.write('') 
+
         ############# GRAPH
 
+        st.write('') 
 
+        #with st.container():
+        data_temp = dataframe[['ID_ALUNO', 'TP_COR_RACA']]
         columns_r = ['Não declarado', 'Branca','Preta', 'Parda', 'Amarela', 'Indígena', 'Não coletado'] #EEEEEEEEEEEEEEEIIIII
         values_r = [[data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 0).count(),\
             data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 1).count(),\
@@ -157,15 +165,18 @@ def plotData(df1, options):
 
     ##############################################################################################################
     if ('Gênero' in options):
-        data_temp = df1[['ID_ALUNO', 'TP_SEXO']]
-
+       
         st.write('') 
         st.subheader('Dados relativos à gênero')
         st.write('') 
 
-                
+        st.write('') 
+
         ############# GRAPH
 
+        st.write('') 
+
+        data_temp = dataframe[['TP_SEXO', 'ID_ALUNO']]
         labels_g = ['Feminino', 'Masculino']
         values_g = [data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 1).count(), data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 2).count()]
         
@@ -203,13 +214,18 @@ def plotData(df1, options):
 
     ############################################################################################################################3
     if ('Idade' in options):
-        data_temp= df1[['ID_ALUNO', 'NU_IDADE']]
 
         st.write('') 
         st.subheader('Dados relativos à idade')
         st.write('') 
 
+        st.write('') 
+
         ############# TABLE
+
+        st.write('') 
+
+        data_temp = dataframe[['ID_ALUNO', 'NU_IDADE']]
         axi= data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE').count()\
             .plot(figsize=(20,10)) #fillstyle = 'full'  ##### mudar para todos
         axi.get_legend().remove()
@@ -264,14 +280,19 @@ def plotData(df1, options):
 
     ######################################################################################################
     if ('Portabilidade de deficiência' in options):
-        data_temp = df1[['ID_ALUNO', 'IN_DEFICIENCIA']]
-        
+        st.write('') 
         st.write('') 
         st.subheader('Dados relativos à portabilidade de deficiência')
+        st.write('') 
+        st.write('') 
+
         st.write('') 
 
         ############# GRAPH
 
+        st.write('') 
+
+        data_temp = dataframe[['ID_ALUNO', 'IN_DEFICIENCIA']]
 
         values_d = [[data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 0).count(),\
             data_temp['IN_DEFICIENCIA'].where(data_temp.IN_DEFICIENCIA == 1).count(),\
@@ -320,10 +341,6 @@ def plotData(df1, options):
 
         del data_d
 
-        listTemp = ['ID_ALUNO','IN_DEFICIENCIA_AUDITIVA', 'IN_DEFICIENCIA_FISICA', 'IN_DEFICIENCIA_INTELECTUAL', 'IN_DEFICIENCIA_MULTIPLA',\
-            'IN_DEFICIENCIA_SURDEZ', 'IN_DEFICIENCIA_SURDOCEGUEIRA']
-
-        dataframe = df1[listTemp]
 
         labels_d = ['pessoa com deficiência auditiva', 'pessoa com deficiência física', 'pessoa com deficiência intelectual',\
             'pessoa com deficiência múltipla','pessoa surda','pessoa com surdocegueira']
@@ -368,12 +385,10 @@ def plotData(df1, options):
         st.table(data_d)
 
 
-        del labels_d, values_d, data_d, dataframe, listTemp                
+        del labels_d, values_d, data_d                 
         
         
-        listTemp =  ['ID_ALUNO', 'IN_DEFICIENCIA_BAIXA_VISAO', 'IN_DEFICIENCIA_CEGUEIRA', 'IN_DEFICIENCIA_SUPERDOTACAO', 'IN_TGD_AUTISMO', 'IN_TGD_SINDROME_ASPERGER',\
-            'IN_TGD_SINDROME_RETT','IN_TGD_TRANSTOR_DESINTEGRATIVO']        
-        dataframe = df1[listTemp]
+
 
         labels_d = ['pessoa com baixa visão', 'pessoa cega','pessoa com altas habilidades/superdotação', 'pessoa com autismo', 'pessoa com Síndrome de Asperger',\
             'pessoa com Síndrome de Rett', 'pessoa com Transtorno Desintegrativo da Infância']
@@ -417,7 +432,8 @@ def plotData(df1, options):
         st.code("Quantidade de alunos por tipo de portabilidade de deficiência")
         st.table(dfd)
 
-        del values_d, labels_d, dfd, listTemp, dataframe
+
+        del values_d, labels_d, dfd
 
 
         st.text(""" Os nomes dos atributos das legendas acima seguem a descrição do Censo da Educação Superior do Inep.
