@@ -1,6 +1,9 @@
+
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import RendererAgg
+_lock = RendererAgg.lock
 import matplotlib.style as style
 style.use('tableau-colorblind10')
 import s3fs
@@ -116,39 +119,40 @@ def plotData(df1, options):
                                 data_temp['TP_COR_RACA'].where(data_temp.TP_COR_RACA == 9).count()]]
 
         data_r = pd.DataFrame(values_r, columns=columns_r) 
-        result_pct = data_r.div(data_r.sum(1), axis=0)
-
-
-        ax = result_pct.plot(kind='bar', figsize=(16,10),width = 2.0, edgecolor='black') #sharex=True, sharey=y
         
-
-        bars = ax.patches
-        hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
-        for bar, hatch in zip(bars, hatches):
-            bar.set_hatch(hatch)
-  
-        plt.legend(labels=data_r.columns,fontsize= 'x-large')
-        plt.suptitle('Taxa percentual de alunos, por cor ou raça', size=25)
-
-
+        with _lock:
+            result_pct = data_r.div(data_r.sum(1), axis=0)
         
-        plt.xticks(fontsize=18) 
-        for spine in plt.gca().spines.values():
-            spine.set_visible(False)
-        plt.yticks([])
+            ax = result_pct.plot(kind='bar', figsize=(16,10),width = 2.0, edgecolor='black') #sharex=True, sharey=y
+            
 
-        for p in ax.patches:
-            width = p.get_width()
-            height = p.get_height()
-            x, y = p.get_xy() 
-            ax.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
+            bars = ax.patches
+            hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
+            for bar, hatch in zip(bars, hatches):
+                bar.set_hatch(hatch)
+    
+            plt.legend(labels=data_r.columns,fontsize= 'x-large')
+            plt.suptitle('Taxa percentual de alunos, por cor ou raça', size=25)
 
-        
 
-        ax.set_xlabel('Cor ou Raça')
+            
+            plt.xticks(fontsize=18) 
+            for spine in plt.gca().spines.values():
+                spine.set_visible(False)
+            plt.yticks([])
 
-        st.pyplot(plt) 
-        plt.clf()
+            for p in ax.patches:
+                width = p.get_width()
+                height = p.get_height()
+                x, y = p.get_xy() 
+                ax.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
+
+            
+
+            ax.set_xlabel('Cor ou Raça')
+
+            st.pyplot(plt) 
+            plt.clf()
 
         del values_r, columns_r
 
@@ -179,19 +183,19 @@ def plotData(df1, options):
         data_temp = dataframe[['TP_SEXO', 'ID_ALUNO']]
         labels_g = ['Feminino', 'Masculino']
         values_g = [data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 1).count(), data_temp['TP_SEXO'].where(data_temp.TP_SEXO == 2).count()]
-        
-        fig, axg = plt.subplots(figsize=(16,10))
-        axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)  ####### shadow = False
-        fig.suptitle('Taxa percentual de alunos, por gênero', size=25)
+        with _lock:
+            fig, axg = plt.subplots(figsize=(16,10))
+            axg.pie(values_g, autopct='%1.1f%%', shadow=False, startangle=60, pctdistance=0.5)  ####### shadow = False
+            fig.suptitle('Taxa percentual de alunos, por gênero', size=25)
 
-        
-        fig = plt.gcf()
+            
+            fig = plt.gcf()
 
-        axg.axis('equal')
-        plt.tight_layout()
-        plt.legend(labels=labels_g, fontsize = 'x-large')
-        st.pyplot(plt) 
-        plt.clf()
+            axg.axis('equal')
+            plt.tight_layout()
+            plt.legend(labels=labels_g, fontsize = 'x-large')
+            st.pyplot(plt) 
+            plt.clf()
 
 
         st.text('O Censo da Educação Superior coletou apenas gêneros binários.')
@@ -226,18 +230,19 @@ def plotData(df1, options):
         st.write('') 
 
         data_temp = dataframe[['ID_ALUNO', 'NU_IDADE']]
-        axi= data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE').count()\
-            .plot(figsize=(20,10)) #fillstyle = 'full'  ##### mudar para todos
-        axi.get_legend().remove()
+        with _lock:
+            axi= data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE').count()\
+                .plot(figsize=(20,10)) #fillstyle = 'full'  ##### mudar para todos
+            axi.get_legend().remove()
 
-        axi.set_ylabel('Quantidade de alunos', fontsize = 18)
-        axi.set_xlabel('Idade', fontsize = 18)
-        plt.suptitle('Taxa de distribuição de alunos, por idade', size=25)
-        ticks = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110]
-        plt.xticks(ticks, ticks)
-        
-        st.pyplot(plt) 
-        plt.clf()
+            axi.set_ylabel('Quantidade de alunos', fontsize = 18)
+            axi.set_xlabel('Idade', fontsize = 18)
+            plt.suptitle('Taxa de distribuição de alunos, por idade', size=25)
+            ticks = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110]
+            plt.xticks(ticks, ticks)
+            
+            st.pyplot(plt) 
+            plt.clf()
 
         st.write('') 
 
@@ -300,33 +305,34 @@ def plotData(df1, options):
 
         data_d = pd.DataFrame(values_d, columns=['Não', 'Sim', 'Não coletado'])
 
-        result_pct = data_d.div(data_d.sum(1), axis=0)
+        with _lock:
+            result_pct = data_d.div(data_d.sum(1), axis=0)
 
-        axd = result_pct.plot(kind='bar',figsize=(16,10),width = 1.0, edgecolor=None)
+            axd = result_pct.plot(kind='bar',figsize=(16,10),width = 1.0, edgecolor=None)
 
-        bars = axd.patches
-        hatches = ('//', '.', 'o')
-        for bar, hatch in zip(bars, hatches):
-            bar.set_hatch(hatch)
+            bars = axd.patches
+            hatches = ('//', '.', 'o')
+            for bar, hatch in zip(bars, hatches):
+                bar.set_hatch(hatch)
 
 
-        plt.legend(labels=data_d.columns,fontsize= 'x-large')
-        plt.suptitle('Taxa percentual de alunos, por portabilidade de deficiência', size=25)
+            plt.legend(labels=data_d.columns,fontsize= 'x-large')
+            plt.suptitle('Taxa percentual de alunos, por portabilidade de deficiência', size=25)
 
-        plt.xticks(fontsize=18)
-        for spine in plt.gca().spines.values():
-            spine.set_visible(False)
-        plt.yticks([])
+            plt.xticks(fontsize=18)
+            for spine in plt.gca().spines.values():
+                spine.set_visible(False)
+            plt.yticks([])
 
-        for p in axd.patches:
-            width = p.get_width()
-            height = p.get_height()
-            x, y = p.get_xy()
-            axd.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
+            for p in axd.patches:
+                width = p.get_width()
+                height = p.get_height()
+                x, y = p.get_xy()
+                axd.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
 
-        axd.set_xlabel('Portabilidade de deficiência')
-        st.pyplot(plt) 
-        plt.clf()
+            axd.set_xlabel('Portabilidade de deficiência')
+            st.pyplot(plt) 
+            plt.clf()
 
         del values_d, data_temp
 
@@ -354,32 +360,32 @@ def plotData(df1, options):
         data_d = pd.DataFrame(values_d, columns=labels_d)
         color_list = ['#d73027', '#fc8d59', '#fee090', '#91bfdb', '#4575b4', '#7bccc4']
         
+        with _lock:
+            result_pct = data_d.div(data_d.sum(1), axis=0)
+            ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
+            
+            bars = ax.patches
+            hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
+            for bar, hatch in zip(bars, hatches):
+                bar.set_hatch(hatch)
 
-        result_pct = data_d.div(data_d.sum(1), axis=0)
-        ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
-        
-        bars = ax.patches
-        hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
-        for bar, hatch in zip(bars, hatches):
-            bar.set_hatch(hatch)
-
-        plt.legend(labels=data_d.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
-        plt.suptitle('Percentual de alunos com deficiência, transtorno global do desenvolvimento ou altas habilidades/superdotação', size=25)
+            plt.legend(labels=data_d.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
+            plt.suptitle('Percentual de alunos com deficiência, transtorno global do desenvolvimento ou altas habilidades/superdotação', size=25)
 
 
-        plt.xticks(fontsize=20)
-        for spine in plt.gca().spines.values():
-            spine.set_visible(False)
-        plt.yticks([])
+            plt.xticks(fontsize=20)
+            for spine in plt.gca().spines.values():
+                spine.set_visible(False)
+            plt.yticks([])
 
-        for p in ax.patches:
-            width = p.get_width()
-            height = p.get_height()
-            x, y = p.get_xy() 
-            ax.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
+            for p in ax.patches:
+                width = p.get_width()
+                height = p.get_height()
+                x, y = p.get_xy() 
+                ax.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
 
-        st.pyplot(plt) 
-        plt.clf()
+            st.pyplot(plt) 
+            plt.clf()
 
         st.code("Quantidade de alunos por tipo de portabilidade de deficiência")
         st.table(data_d)
@@ -405,32 +411,33 @@ def plotData(df1, options):
 
         color_list = ['#d73027', '#fc8d59', '#fee090', '#91bfdb', '#4575b4', '#bae4bc', '#7bccc4']
 
-        result_pct = dfd.div(dfd.sum(1), axis=0)
-        ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
+        with _lock:
+            result_pct = dfd.div(dfd.sum(1), axis=0)
+            ax = result_pct.plot(kind='bar',figsize=(16,10),width = 4.0, color = color_list, edgecolor='black', linewidth=1, linestyle='dashed') 
 
-        bars = ax.patches
-        hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
-        for bar, hatch in zip(bars, hatches):
-            bar.set_hatch(hatch)
+            bars = ax.patches
+            hatches = ('//', '.', '*', 'o', '.O', 'xx','++')
+            for bar, hatch in zip(bars, hatches):
+                bar.set_hatch(hatch)
 
-        plt.legend(labels=dfd.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
+            plt.legend(labels=dfd.columns,fontsize= 20, loc = 'upper right', bbox_to_anchor=(0.8, 0., 0.5, 1.0))
 
-        plt.xticks(fontsize=20) 
-        for spine in plt.gca().spines.values():
-            spine.set_visible(False)
-        plt.yticks([])
+            plt.xticks(fontsize=20) 
+            for spine in plt.gca().spines.values():
+                spine.set_visible(False)
+            plt.yticks([])
 
-        for p in ax.patches:
-            width = p.get_width()
-            height = p.get_height()
-            x, y = p.get_xy() 
-            ax.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
+            for p in ax.patches:
+                width = p.get_width()
+                height = p.get_height()
+                x, y = p.get_xy() 
+                ax.annotate('{:.00001%}'.format(height), (p.get_x()+.5*width, p.get_y() + height + 0.01), ha = 'center')
 
-        st.pyplot(plt) 
-        plt.clf()
+            st.pyplot(plt) 
+            plt.clf()
 
-        st.code("Quantidade de alunos por tipo de portabilidade de deficiência")
-        st.table(dfd)
+            st.code("Quantidade de alunos por tipo de portabilidade de deficiência")
+            st.table(dfd)
 
 
         del values_d, labels_d, dfd
@@ -511,3 +518,4 @@ def main():
                 if button == True and len(options) != 0:
                     plotData(datafiltred, options)
 main()
+
