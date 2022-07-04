@@ -249,7 +249,7 @@ def plotData(df1, options):
 
         col1, col2 = st.columns(spec=[10,10])
         with col1:
-            st.code('Dados relativos à idade, organizados por ordem de valor (Rol).')  
+            st.markdown('Dados relativos à idade, organizados por ordem de valor (Rol).')  
 
             valage = data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE')\
                 .count().sort_values(by='NU_IDADE', ascending=True)
@@ -261,7 +261,7 @@ def plotData(df1, options):
                 'IDADE' : valage.NU_IDADE})))
 
         with col2:
-            st.code('Dados relativos à idade, organizados por frequência.')
+            st.markdown('Dados relativos à idade, organizados por frequência.')
             
 
             valage1 = data_temp[['ID_ALUNO', 'NU_IDADE']].groupby('NU_IDADE')\
